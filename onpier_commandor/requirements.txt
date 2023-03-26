@@ -1,0 +1,16 @@
+hvac[parser]
+pydantic
+jira
+kubernetes
+pandas
+loguru
+tqdm
+typer-cli
+diagrams
+requests
+GitPython
+PyGitHub
+httpx
+joblib
+python-dotenv
+typer[all]
