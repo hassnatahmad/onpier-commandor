@@ -1,9 +1,11 @@
 import typer
-
+from rich.console import Console
 from onpier_commandor.enums import DocDbClustersEnum, DocDbClusterActionsEnum
 from onpier_commandor.k8s.k8s_pods import aws_docdb_py_status
+from onpier_commandor.utils.aws_utils import eks_update
 
 app = typer.Typer()
+console = Console()
 
 
 @app.command()
@@ -19,6 +21,11 @@ def docdb(action: DocDbClusterActionsEnum = DocDbClusterActionsEnum.status,
         pass
     else:
         typer.echo(f"Unknown action: {action.value}")
+
+
+@app.command()
+def eks():
+    eks_update(console_=console)
 
 
 @app.command()

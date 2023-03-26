@@ -141,10 +141,13 @@ def exec_command_in_datadog_pod(k8s_v1_client: core_v1_api.CoreV1Api):
 def aws_docdb_py_status(cluster_name: str):
     if cluster_name == 'all':
         all_connections = helper_utils.get_all_k8s_v1_clients(skip_contexts=['hassnat-k8s'])
+        print("Getting all V1 clients: ")
         for connection in all_connections:
             k8s_v1_client = connection['core_v1']
+            print(f'Checking status of pod "aws-docdb-py" in cluster: "{connection["name"]}"')
             helper_utils.check_pod_status(k8s_v1_client=k8s_v1_client, pod_name='aws-docdb-py', namespace='default')
     else:
+        print(f'Checking status of pod "aws-docdb-py" in cluster: "{cluster_name}"')
         k8s_v1_client = helper_utils.get_k8s_v1_client_by_name(context_name=cluster_name)
         helper_utils.check_pod_status(k8s_v1_client=k8s_v1_client, pod_name='aws-docdb-py', namespace='default')
 

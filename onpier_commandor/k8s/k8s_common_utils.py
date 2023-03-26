@@ -112,25 +112,32 @@ class HelperUtils:
     @staticmethod
     def check_pod_status(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, status: str = 'Running',
                          timeout: int = 0):
-        pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
-        if pod.status.phase == status:
-            print(f'Pod {pod_name} is {status}. Hurray!')
-        else:
-            if timeout == 0:
-                print(f'Pod {pod_name} is not {status}. Please check manually or increase timeout.')
-            else:
-                max_retry = int(timeout / 5)
-                retry = 0
-                print(f'Waiting for pod {pod_name} to be {status}. Timeout: {timeout} seconds')
-                while retry < max_retry:
-                    time.sleep(5)
-                    pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
-                    if pod.status.phase == status:
-                        print(f'Pod {pod_name} is {status}. Hurray!')
-                        break
-                    print(
-                        f'Waiting for pod {pod_name} to be in {status} state, current: {pod.status.phase}. Timeout: {timeout} seconds. Retry: {retry}/{max_retry}')
-                    retry += 1
+        try:
+            pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
+            if pod.status.phase == status:
+                print(f'Pod {pod_name} is {status}. Hurray!')
+                return
+        except ApiException as e:
+            print(f'Exception when calling CoreV1Api->read_namespaced_pod: {e}')
+            pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
+    # if pod.status.phase == status:
+    #     print(f'Pod {pod_name} is {status}. Hurray!')
+    # else:
+    #     if timeout == 0:
+    #         print(f'Pod {pod_name} is not {status}. Please check manually or increase timeout.')
+    #     else:
+    #         max_retry = int(timeout / 5)
+    #         retry = 0
+    #         print(f'Waiting for pod {pod_name} to be {status}. Timeout: {timeout} seconds')
+    #         while retry < max_retry:
+    #             time.sleep(5)
+    #             pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
+    #             if pod.status.phase == status:
+    #                 print(f'Pod {pod_name} is {status}. Hurray!')
+    #                 break
+    #             print(
+    #                 f'Waiting for pod {pod_name} to be in {status} state, current: {pod.status.phase}. Timeout: {timeout} seconds. Retry: {retry}/{max_retry}')
+    #             retry += 1
 
     @staticmethod
     def get_pod_logs(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, cluster_name: str):

@@ -22,6 +22,7 @@ jira = "^3.5.0"
 pydantic = "^1.10.7"
 hvac = {extras = ["parser"], version = "^1.1.0"}
 joblib = "^1.2.0"
+boto3 = "^1.26.99"
 
 
 [build-system]
