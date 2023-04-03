@@ -18,7 +18,7 @@ def port_forward_list():
                         'namespace': 'vault',
                         'service': 'vault',
                         'port': 8200,
-                        'local_port': 8200 + ind,
+                        'local_port': 8200 + ind + 1,
                         'process_id': None,
                     },
                     {
@@ -26,7 +26,7 @@ def port_forward_list():
                         'namespace': 'default',
                         'service': 'aws-documentdb',
                         'port': 8081,
-                        'local_port': 8300 + ind,
+                        'local_port': 8300 + ind + 1,
                         'process_id': None,
                     },
                     {
@@ -34,7 +34,7 @@ def port_forward_list():
                         'namespace': 'default',
                         'service': 'aws-msk',
                         'port': 9092,
-                        'local_port': 9000 + ind,
+                        'local_port': 9000 + ind + 1,
                         'process_id': None,
                     },
                 ]
@@ -46,7 +46,12 @@ def port_forward_list():
 def get_profiles():
     output = subprocess.check_output(['aws', 'configure', 'list-profiles'])
     profiles = output.decode('utf-8').strip().split('\n')
-    return profiles
+    filtered_profiles = []
+    for profile in profiles:
+        if "audit" in profile.lower() or "backup" in profile.lower() or "log" in profile.lower() or "sandbox" in profile.lower():
+            continue
+        filtered_profiles.append(profile)
+    return filtered_profiles
 
 
 def aws_sso_login(profile_name):
@@ -79,32 +84,54 @@ def update_kubeconfig(profile_name, cluster):
 
 
 # @app.command()
+
+def check_if_aws_sso_is_logged_in(profile_name: str, region: str, console_: Console):
+    cmd = ['aws', 'eks', 'list-clusters', '--region', region, '--profile', profile_name, '--output', 'text',
+           '--query', 'clusters[*]']
+    try:
+        output = subprocess.check_output(cmd)
+        found_clusters = output.decode('utf-8').strip().split('\n')
+        if len(found_clusters) == 0:
+            console_.print(f"Please login to AWS SSO with profile {profile_name}")
+            aws_sso_login(profile_name)
+    except subprocess.CalledProcessError as e:
+        console_.print(f"Follwing error occured: {e}")
+        console_.print(f"Please login to AWS SSO with profile {profile_name}")
+        aws_sso_login(profile_name)
+
+
 def eks_update(console_: Console):
     profiles = get_profiles()
-    aws_sso_login(profiles[0])
+    check_if_aws_sso_is_logged_in(profile_name=profiles[0], region='eu-central-1', console_=console_)
     for profile_name in profiles:
         clusters = get_eks_clusters(profile_name, console_=console_)
 
-        if not clusters:
-            console_.print(f"No clusters found for profile: {profile_name}")
-        else:
+        if clusters:
             for cluster in clusters:
                 # console_.print(f"Updating kubeconfig for cluster: {cluster}")
                 update_kubeconfig(profile_name, cluster)
 
     console_.print("Updated .kube/config:")
+    start_port_forwards(console_=console_)
+
+
+def kill_process_by_port(port: int, console_: Console):
+    try:
+        existing_port_forwards = subprocess.check_output(['lsof', '-i', f':{port}'])
+        existing_port_forwards = existing_port_forwards.decode('utf-8').strip().split('\n')
+        for existing_port_forward in existing_port_forwards:
+            if existing_port_forward.startswith('kubectl'):
+                existing_port_forward = existing_port_forward.split(' ')
+                existing_port_forward = [x for x in existing_port_forward if x]
+                process_id = existing_port_forward[1]
+                stop_port_forward(process_id, console_=console_)
+    except subprocess.CalledProcessError as e:
+        console_.print(f"Error while killing process by port: {e}")
 
 
 def start_port_forward_background(namespace: str, service: str, port: int, local_port: int, console_: Console):
     # check if port is already forwarded on local_port. if so, kill it,start new port forward
-    existing_port_forwards = subprocess.check_output(['lsof', '-i', f':{local_port}'])
-    existing_port_forwards = existing_port_forwards.decode('utf-8').strip().split('\n')
-    for existing_port_forward in existing_port_forwards:
-        if existing_port_forward.startswith('kubectl'):
-            existing_port_forward = existing_port_forward.split(' ')
-            existing_port_forward = [x for x in existing_port_forward if x]
-            process_id = existing_port_forward[1]
-            stop_port_forward(process_id, console_=console_)
+    kill_process_by_port(port=local_port, console_=console_)
     console_.print(f"Starting port forward: {namespace} {service} {port} {local_port}", style="bold yellow")
     nohup_cmd = ['nohup', 'kubectl', 'port-forward', '-n', namespace, service, f'{local_port}:{port}', '&']
     process_id = subprocess.check_output(nohup_cmd)
@@ -132,10 +159,9 @@ def start_port_forwards(console_: Console):
     port_forward_list_ = port_forward_list()
     table = Table('Profile', 'Namespace', 'Service', 'Port', 'Local Port', 'Host', 'Process ID', show_header=True,
                   header_style="bold magenta")
-    for ind,profile in enumerate(port_forward_list_):
+    for ind, profile in enumerate(port_forward_list_):
         profile_name = profile['profile']
-        aws_sso_login(profile_name)
-        for ind_,service in enumerate(profile['services']):
+        for ind_, service in enumerate(profile['services']):
             process_id = start_port_forward_background(service['namespace'], service['service'], service['port'],
                                                        service['local_port'],
                                                        console_=console_)
@@ -150,15 +176,15 @@ def stop_port_forwards(console_: Console):
     port_forward_list_ = port_forward_list()
     table = Table('Profile', 'Namespace', 'Service', 'Port', 'Local Port', 'Host', 'Process ID', show_header=True,
                   header_style="bold magenta")
-    for ind,profile in enumerate(port_forward_list_):
+    for ind, profile in enumerate(port_forward_list_):
         profile_name = profile['profile']
-        aws_sso_login(profile_name)
-        for ind_,service in enumerate(profile['services']):
+        for ind_, service in enumerate(profile['services']):
             process_id = service['process_id']
             stop_port_forward(process_id, console_=console_)
             table.add_row(profile_name, service['namespace'], service['service'], service['port'],
                           service['local_port'], service['host'], process_id)
     console_.print(table)
+
 
 if __name__ == "__main__":
     console = Console()
