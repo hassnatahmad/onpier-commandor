@@ -14,3 +14,4 @@ httpx
 joblib
 python-dotenv
 typer[all]
+boto3
