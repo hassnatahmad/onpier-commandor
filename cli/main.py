@@ -1,8 +1,8 @@
 import typer
 from rich.console import Console
-from onpier_commandor.enums import DocDbClustersEnum, DocDbClusterActionsEnum
-from onpier_commandor.k8s.k8s_pods import aws_docdb_py_status
-from onpier_commandor.utils.aws_utils import eks_update
+from cli.enums import DocDbClustersEnum, DocDbClusterActionsEnum
+from cli.k8s.k8s_pods import aws_docdb_py_status
+from cli.utils.aws_utils import eks_update
 
 app = typer.Typer()
 console = Console()

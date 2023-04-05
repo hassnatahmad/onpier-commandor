@@ -1,6 +1,6 @@
 import os
 import asyncio
-from onpier_commandor.k8s.k8s_common_utils import helper_utils
+from cli.k8s.k8s_common_utils import helper_utils
 from kubernetes.client.api import core_v1_api
 
 
