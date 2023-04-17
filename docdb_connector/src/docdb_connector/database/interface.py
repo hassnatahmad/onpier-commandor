@@ -14,7 +14,9 @@ from docdb_connector.database.crud import (
     get_all_collections,
     get_collection_schema,
     db_command,
-    db_admin_command
+    db_admin_command,
+    update_many,
+    insert_many
 )
 
 
@@ -71,6 +73,33 @@ def delete_none(_dict):
 
 
 class DbService:
+    @staticmethod
+    async def update_many_interface(mongo_collection: str, what_to_update: dict,
+                                    mongo_db: str = None, find_condition: dict = None, array_filters: list = None):
+        try:
+            row = await update_many(
+                what_to_update=what_to_update,
+                mongo_collection=mongo_collection,
+                mongo_db=mongo_db,
+                find_condition=find_condition,
+                array_filters=array_filters,
+            )
+            return row
+        except Exception as err:
+            log.error(f"unable to update record: {what_to_update} in collection:{mongo_collection} Error:  {err}")
+
+    @staticmethod
+    async def insert_many_interface(mongo_collection: str, what_to_insert: list, mongo_db: str = None):
+        try:
+            row = await insert_many(
+                input_dicts=what_to_insert,
+                mongo_collection=mongo_collection,
+                mongo_db=mongo_db,
+            )
+            return row
+        except Exception as err:
+            log.error(f"unable to insert record: {what_to_insert} in collection:{mongo_collection} Error:  {err}")
+
     @staticmethod
     async def get_interface(find_condition: dict, mongo_collection: str, values_to_return_or_skip: dict = None,
                             mongo_db: str = None):

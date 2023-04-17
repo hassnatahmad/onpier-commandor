@@ -116,38 +116,41 @@ class HelperUtils:
             print("Exception when calling CoreV1Api->connect_get_namespaced_pod_exec: %s " % e)
 
     @staticmethod
-    def check_pod_status(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, status: str = 'Running',
+    def check_pod_status(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, cluster_name: str,
+                         status: str = 'Running',
                          timeout: int = 0):
         try:
             pod = k8s_v1_client.read_namespaced_pod(name=pod_name, namespace=namespace)
             if pod.status.phase == status:
-                print(f'Pod {pod_name} is {status}. Hurray!')
+                print(f'Pod {pod_name} is {status} in cluster {cluster_name}')
                 return True
         except ApiException as e:
-            print(f"Failure: {e.reason}")
+            print(f"Unable to read pod {pod_name} in cluster {cluster_name}. Reason: Not found")
             return False
             # print(f'Exception when calling CoreV1Api->read_namespaced_pod: {e}')
 
     @staticmethod
-    def create_pod(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, pod_yaml: str):
-        if HelperUtils.check_pod_status(k8s_v1_client, pod_name, namespace):
-            print(f'Pod {pod_name} already exists. Skipping creation.')
+    def create_pod(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, pod_yaml: dict,
+                   cluster_name: str):
+        if HelperUtils.check_pod_status(k8s_v1_client=k8s_v1_client, pod_name=pod_name, namespace=namespace,
+                                        cluster_name=cluster_name):
+            print(f'Pod {pod_name} already exists in cluster {cluster_name}. Skipping creation.')
             return True
         try:
             k8s_v1_client.create_namespaced_pod(namespace=namespace, body=pod_yaml)
-            print(f'Pod {pod_name} created successfully.')
+            print(f'Pod {pod_name} created successfully in cluster {cluster_name}.')
             return True
         except ApiException as e:
-            print(f'Unable to create pod {pod_name}. Exception when calling CoreV1Api->create_namespaced_pod: {e.reason}')
+            print(f'Unable to create pod {pod_name} in cluster {cluster_name}. Exception: {e}')
             return False
 
     @staticmethod
-    def delete_pod(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str):
+    def delete_pod(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, cluster_name: str):
         try:
             k8s_v1_client.delete_namespaced_pod(name=pod_name, namespace=namespace)
-            print(f'Pod {pod_name} deleted successfully.')
+            print(f'Pod {pod_name} deleted successfully in cluster {cluster_name}.')
         except ApiException as e:
-            print(f'Exception when calling CoreV1Api->delete_namespaced_pod: {e}')
+            print(f'Unable to delete pod {pod_name} in cluster {cluster_name}. Reason: {e}')
 
     # if pod.status.phase == status:
     #     print(f'Pod {pod_name} is {status}. Hurray!')
@@ -169,9 +172,9 @@ class HelperUtils:
     #             retry += 1
 
     @staticmethod
-    def get_pod_logs(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str):
+    def get_pod_logs(k8s_v1_client: core_v1_api.CoreV1Api, pod_name: str, namespace: str, cluster_name: str):
         logs = k8s_v1_client.read_namespaced_pod_log(name=pod_name, namespace=namespace)
-        print(f'Logs for pod {pod_name}: {logs}')
+        print(f'Logs for pod {pod_name} in cluster {cluster_name}:\n{logs}')
 
 
 helper_utils = HelperUtils()

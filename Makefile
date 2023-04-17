@@ -3,8 +3,8 @@ build-push-docdb-migrator:
 	cd docdb_migrator && docker build -t hassnat/toolkit:docdb-migrator-v1.0.2 . && cd ..
 	docker push hassnat/toolkit:docdb-migrator-v1.0.2
 build-push-docdb-connector:
-	cd docdb_connector && docker build -t hassnat/toolkit:docdb-connector-v1.0.10 . && cd ..
-	docker push hassnat/toolkit:docdb-connector-v1.0.10
+	cd docdb_connector && docker build -t hassnat/toolkit:docdb-connector-v1.0.16 . && cd ..
+	docker push hassnat/toolkit:docdb-connector-v1.0.16
 run-commandor-cli:
 	PYTHONPATH=commandor/src:$PYTHONPATH /home/hassnat/development/hassnatahmad/onpier-commandor/venv/bin/python commandor/src/cli/main.py
 test-docdb-connectors:

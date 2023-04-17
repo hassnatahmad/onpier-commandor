@@ -51,3 +51,19 @@ async def delete_collection_records(mongo_db: str, collection_name: str, query: 
     if not record:
         raise RecordNotFoundException
     return record
+
+
+async def update_collection_records(mongo_db: str, collection_name: str, query: dict, what_to_update: dict):
+    record = await db_service.update_many_interface(mongo_db=mongo_db, mongo_collection=collection_name,
+                                                    find_condition=query, what_to_update=what_to_update)
+    if not record:
+        raise RecordNotFoundException
+    return record
+
+
+async def insert_collection_records(mongo_db: str, collection_name: str, what_to_insert: list[dict]):
+    record = await db_service.insert_many_interface(mongo_db=mongo_db, mongo_collection=collection_name,
+                                                    what_to_insert=what_to_insert)
+    if not record:
+        raise RecordNotFoundException
+    return record

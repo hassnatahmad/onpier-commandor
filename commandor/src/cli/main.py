@@ -2,7 +2,7 @@ import typer
 from rich.console import Console
 
 from cli.enums import DocDbClustersEnum, DocDbClusterActionsEnum
-from cli.k8s.k8s_pods import aws_docdb_status, aws_docdb_delete, aws_docdb_update
+from cli.k8s.k8s_pods import aws_docdb_status, aws_docdb_delete, aws_docdb_update,aws_docdb_logs
 from cli.utils.aws_utils import eks_update
 
 app = typer.Typer()
@@ -18,6 +18,8 @@ def docdb(action: DocDbClusterActionsEnum = DocDbClusterActionsEnum.status,
         aws_docdb_delete(cluster_name=env.value)
     elif action == DocDbClusterActionsEnum.update:
         aws_docdb_update(cluster_name=env.value)
+    elif action == DocDbClusterActionsEnum.logs:
+        aws_docdb_logs(cluster_name=env.value)
     else:
         typer.echo(f"Unknown action: {action.value}")
 

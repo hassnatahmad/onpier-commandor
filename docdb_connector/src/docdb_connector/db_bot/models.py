@@ -10,5 +10,12 @@ class DbCollectionInput(DbInput):
     query: dict | None = None
 
 
+class DbCollectionUpdateInput(DbCollectionInput):
+    what_to_update: dict | None = None
+
+
+class DbCollectionInsertInput(DbCollectionInput):
+    what_to_insert: list[dict] | None = None
+
 class DbOutput(OnpierBase):
     data: list

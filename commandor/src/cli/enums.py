@@ -8,6 +8,8 @@ class DocDbClustersEnum(str, Enum):
     devonpier = 'devonpier'
     stageonpier = 'stageonpier'
     all = 'all'
+    prod = 'prod'
+    dev = 'dev'
     prodlvm = 'prodlvm'
     devlvm = 'devlvm'
     prodhdi = 'prodhdi'
@@ -27,3 +29,4 @@ class DocDbClusterActionsEnum(str, Enum):
     create = 'create'
     delete = 'delete'
     update = 'update'
+    logs = 'logs'

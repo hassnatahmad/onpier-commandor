@@ -2,7 +2,7 @@ import os
 
 
 def pod_manifest(pod_name: str, namespace: str, image: str, port: int, env_vars: list[dict] = None,
-                 labels: dict = None):
+                 labels: dict = None) -> dict:
     return {
         "apiVersion": "v1",
         "kind": "Pod",
@@ -61,7 +61,7 @@ def aws_docdb_migrator_yaml(cluster_name: str = None):
 
 
 def aws_docdb_connector_yaml(cluster_name: str = None):
-    image = 'hassnat/toolkit:docdb-connector-v1.0.10'
+    image = 'hassnat/toolkit:docdb-connector-v1.0.16'
     namespace = 'default'
     pod_name = 'docdb-connector'
     port = 8081

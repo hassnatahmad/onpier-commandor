@@ -127,8 +127,8 @@ async def create_one(
     return row.inserted_id
 
 
-async def create_many(
-        input_dicts: list[Dict],
+async def insert_many(
+        input_dicts: list[dict],
         mongo_collection: str,
         mongo_db: str,
 ) -> List[str]:
@@ -142,22 +142,18 @@ async def create_many(
 
     :return: list[STR] or None
     """
-    docs = []
-    for i in input_dicts:
-        i.update({"created_at": datetime.utcnow(), "updated_at": datetime.utcnow()})
-        docs.append(i)
     db_client: AsyncIOMotorClient = await get_database()
-    rows = await db_client[mongo_db][mongo_collection].insert_many(docs)
+    rows = await db_client[mongo_db][mongo_collection].insert_many(input_dicts)
     row_ids = rows.inserted_ids
 
     return row_ids
 
 
 async def update_one(
-        find_condition: dict,
         new_value: dict,
         mongo_collection: str,
         mongo_db: str,
+        find_condition: dict = None,
         array_filters: dict = None,
 ):
     """Update a user with new details
@@ -170,6 +166,8 @@ async def update_one(
 
     :return: None
     """
+    if find_condition is None:
+        find_condition = {}
     updated_values = {"$set": new_value}
     db_client: AsyncIOMotorClient = await get_database()
     row = await db_client[mongo_db][mongo_collection].update_one(filter=find_condition, update=updated_values,
@@ -179,16 +177,16 @@ async def update_one(
 
 
 async def update_many(
-        find_condition: dict,
-        new_value: dict,
+        what_to_update: dict,
         mongo_collection: str,
         mongo_db: str,
+        find_condition: dict = None,
         array_filters: list[Dict] = None,
 ):
     """Update a user with new details
 
     :param array_filters:
-    :param new_value:
+    :param what_to_update:
     :param find_condition:
     :param mongo_db:
     :param mongo_collection:
@@ -196,7 +194,9 @@ async def update_many(
     :return: None
     """
 
-    updated_values = {"$set": new_value}
+    updated_values = {"$set": what_to_update}
+    if find_condition is None:
+        find_condition = {}
 
     db_client: AsyncIOMotorClient = await get_database()
     if array_filters is not None:
@@ -205,7 +205,7 @@ async def update_many(
         )
     else:
         row = await db_client[mongo_db][mongo_collection].update_many(find_condition, updated_values)
-    logger.info(f"db updated values: {new_value}")
+    logger.info(f"db updated values: {what_to_update}")
     return row.modified_count
 
 
@@ -372,3 +372,4 @@ async def db_admin_command(command: dict):
                 "error_message": str(e)
             }
         ]
+
